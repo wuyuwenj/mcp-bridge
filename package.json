@@ -1,0 +1,30 @@
+{
+  "name": "apify-mcp-bridge",
+  "version": "0.0.1",
+  "type": "module",
+  "description": "Host any npm MCP server as HTTP/SSE endpoint for ChatGPT",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "apify": "^3.4.4",
+    "cors": "^2.8.5",
+    "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "@apify/tsconfig": "^0.1.1",
+    "@types/cors": "^2.8.13",
+    "@types/express": "^5.0.2",
+    "@types/node": "^22.15.32",
+    "tsx": "^4.20.3",
+    "typescript": "^5.8.3"
+  },
+  "scripts": {
+    "start": "npm run start:dev",
+    "start:prod": "node dist/main.js",
+    "start:dev": "tsx src/main.ts",
+    "build": "tsc"
+  },
+  "author": "",
+  "license": "ISC"
+}

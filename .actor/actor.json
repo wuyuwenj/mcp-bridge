@@ -1,0 +1,44 @@
+{
+  "actorSpecification": 1,
+  "name": "mcp-bridge",
+  "title": "MCP Bridge for ChatGPT",
+  "description": "Host any npm MCP server as HTTP/SSE endpoint for ChatGPT",
+  "version": "0.0",
+  "buildTag": "latest",
+  "usesStandbyMode": true,
+  "input": {
+    "title": "MCP Bridge Input",
+    "description": "Configure which npm MCP server to host",
+    "type": "object",
+    "schemaVersion": 1,
+    "properties": {
+      "package": {
+        "title": "NPM Package",
+        "type": "string",
+        "description": "The npm package name of the MCP server (e.g., @anthropic/mcp-server-fetch)",
+        "editor": "textfield",
+        "prefill": "@modelcontextprotocol/server-everything"
+      },
+      "version": {
+        "title": "Package Version",
+        "type": "string",
+        "description": "Optional: specific version to install (e.g., 1.0.0). Defaults to latest.",
+        "editor": "textfield"
+      },
+      "args": {
+        "title": "CLI Arguments",
+        "type": "array",
+        "description": "Optional: command line arguments to pass to the MCP server",
+        "editor": "stringList"
+      },
+      "env": {
+        "title": "Environment Variables",
+        "type": "object",
+        "description": "Optional: environment variables for the MCP server (e.g., API keys)",
+        "editor": "json"
+      }
+    },
+    "required": ["package"]
+  },
+  "dockerfile": "../Dockerfile"
+}
