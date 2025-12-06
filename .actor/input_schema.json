@@ -1,0 +1,23 @@
+{
+  "title": "MCP Bridge Input",
+  "description": "Paste the JSON config from Smithery to host as a remote server for ChatGPT.",
+  "type": "object",
+  "schemaVersion": 1,
+  "properties": {
+    "mcpConfig": {
+      "title": "Smithery JSON Config",
+      "type": "object",
+      "description": "Paste the JSON config from Smithery (copy from the 'JSON' tab)",
+      "editor": "json",
+      "prefill": {
+        "mcpServers": {
+          "server-name": {
+            "command": "npx",
+            "args": ["-y", "@smithery/cli@latest", "run", "@your/server", "--key", "your-key"]
+          }
+        }
+      }
+    }
+  },
+  "required": ["mcpConfig"]
+}
