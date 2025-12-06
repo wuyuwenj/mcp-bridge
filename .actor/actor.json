@@ -8,27 +8,32 @@
   "usesStandbyMode": true,
   "input": {
     "title": "MCP Bridge Input",
-    "description": "Configure which npm MCP server to host",
+    "description": "Configure which MCP server to host. Use either 'package' (npm install) or 'command' (custom command like npx).",
     "type": "object",
     "schemaVersion": 1,
     "properties": {
       "package": {
         "title": "NPM Package",
         "type": "string",
-        "description": "The npm package name of the MCP server (e.g., @anthropic/mcp-server-fetch)",
-        "editor": "textfield",
-        "prefill": "@modelcontextprotocol/server-everything"
+        "description": "npm package name to install and run (e.g., @modelcontextprotocol/server-everything). Leave empty if using 'command'.",
+        "editor": "textfield"
       },
       "version": {
         "title": "Package Version",
         "type": "string",
-        "description": "Optional: specific version to install (e.g., 1.0.0). Defaults to latest.",
+        "description": "Optional: specific version to install (e.g., 1.0.0). Only used with 'package'.",
+        "editor": "textfield"
+      },
+      "command": {
+        "title": "Custom Command",
+        "type": "string",
+        "description": "Custom command to run (e.g., 'npx'). Use this instead of 'package' for npx-style commands.",
         "editor": "textfield"
       },
       "args": {
         "title": "CLI Arguments",
         "type": "array",
-        "description": "Optional: command line arguments to pass to the MCP server",
+        "description": "Arguments to pass to the command (e.g., ['@smithery/cli@latest', 'run', '@executeautomation/playwright-mcp-server'])",
         "editor": "stringList"
       },
       "env": {
@@ -38,7 +43,7 @@
         "editor": "json"
       }
     },
-    "required": ["package"]
+    "required": []
   },
   "dockerfile": "../Dockerfile"
 }

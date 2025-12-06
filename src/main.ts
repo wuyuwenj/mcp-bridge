@@ -8,8 +8,12 @@ import { createInterface } from 'readline';
 await Actor.init();
 
 interface ActorInput {
-    package: string;
+    // Option 1: npm package (will be installed globally)
+    package?: string;
     version?: string;
+    // Option 2: custom command (e.g., npx)
+    command?: string;
+    // Shared options
     args?: string[];
     env?: Record<string, string>;
 }
@@ -281,17 +285,31 @@ app.post('/message', async (req: Request, res: Response) => {
 async function main() {
     const input = await Actor.getInput<ActorInput>();
 
-    if (!input?.package) {
-        log.error('No package specified in input');
-        throw new Error('package is required in input');
+    if (!input?.package && !input?.command) {
+        log.error('No package or command specified in input');
+        throw new Error('Either "package" or "command" is required in input');
     }
 
-    // Install and spawn MCP server
-    const binName = await installPackage(input.package, input.version);
-    mcpProcess = spawnMcpServer(binName, input.args, input.env);
+    let cmd: string;
+    let cmdArgs: string[];
+
+    if (input.command) {
+        // Custom command mode (e.g., npx)
+        cmd = input.command;
+        cmdArgs = input.args || [];
+        log.info(`Using custom command: ${cmd}`, { args: cmdArgs });
+    } else {
+        // Package mode - install and run
+        const binName = await installPackage(input.package!, input.version);
+        cmd = binName;
+        cmdArgs = input.args || [];
+    }
+
+    // Spawn MCP server
+    mcpProcess = spawnMcpServer(cmd, cmdArgs, input.env);
 
     // Give the process a moment to start
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 2000));
 
     // Start Express server
     const PORT = process.env.ACTOR_WEB_SERVER_PORT
