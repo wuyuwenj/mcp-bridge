@@ -8,20 +8,14 @@
   "usesStandbyMode": true,
   "input": {
     "title": "MCP Bridge Input",
-    "description": "Paste your Smithery command or JSON config to host as a remote server for ChatGPT.",
+    "description": "Paste the JSON config from Smithery to host as a remote server for ChatGPT.",
     "type": "object",
     "schemaVersion": 1,
     "properties": {
-      "playgroundCommand": {
-        "title": "Smithery Playground Command",
-        "type": "string",
-        "description": "Paste the playground command from Smithery (e.g., 'npx @smithery/cli@latest run @VapiAI/vapi-mcp-server --playground')",
-        "editor": "textfield"
-      },
       "mcpConfig": {
-        "title": "MCP JSON Config",
+        "title": "Smithery JSON Config",
         "type": "object",
-        "description": "Or paste the JSON config from Smithery (the mcpServers object)",
+        "description": "Paste the JSON config from Smithery (copy from the 'JSON' tab)",
         "editor": "json",
         "prefill": {
           "mcpServers": {
@@ -33,7 +27,7 @@
         }
       }
     },
-    "required": []
+    "required": ["mcpConfig"]
   },
   "dockerfile": "../Dockerfile"
 }

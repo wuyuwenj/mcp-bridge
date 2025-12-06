@@ -18,10 +18,8 @@ interface McpConfig {
 }
 
 interface ActorInput {
-    // Option 1: Paste the playground command
-    playgroundCommand?: string;
-    // Option 2: Paste the JSON config
-    mcpConfig?: McpConfig;
+    // Paste the JSON config from Smithery
+    mcpConfig: McpConfig;
 }
 
 interface JsonRpcMessage {
@@ -46,69 +44,25 @@ const pendingRequests = new Map<string | number, {
 }>();
 const sseClients = new Set<Response>();
 
-// Parse a command line string into command and arguments
-function parseCommandLine(cmdLine: string): { cmd: string; args: string[] } {
-    const parts: string[] = [];
-    let current = '';
-    let inQuote = false;
-    let quoteChar = '';
-
-    for (const char of cmdLine) {
-        if ((char === '"' || char === "'") && !inQuote) {
-            inQuote = true;
-            quoteChar = char;
-        } else if (char === quoteChar && inQuote) {
-            inQuote = false;
-            quoteChar = '';
-        } else if (char === ' ' && !inQuote) {
-            if (current) {
-                parts.push(current);
-                current = '';
-            }
-        } else {
-            current += char;
-        }
-    }
-    if (current) {
-        parts.push(current);
+// Extract command and args from the mcpConfig
+function getCommandFromInput(input: ActorInput): { cmd: string; args: string[]; env?: Record<string, string> } {
+    if (!input.mcpConfig?.mcpServers) {
+        throw new Error('mcpConfig with mcpServers is required');
     }
 
-    // Remove --playground flag since we ARE the remote server
-    const filteredParts = parts.filter(p => p !== '--playground');
+    const servers = Object.entries(input.mcpConfig.mcpServers);
+    if (servers.length === 0) {
+        throw new Error('No servers found in mcpConfig');
+    }
+
+    const [serverName, config] = servers[0];
+    log.info(`Using MCP config for server: ${serverName}`);
 
     return {
-        cmd: filteredParts[0] || '',
-        args: filteredParts.slice(1),
+        cmd: config.command,
+        args: config.args || [],
+        env: config.env,
     };
-}
-
-// Extract command and args from input
-function getCommandFromInput(input: ActorInput): { cmd: string; args: string[]; env?: Record<string, string> } {
-    if (input.playgroundCommand) {
-        // Parse the playground command
-        const parsed = parseCommandLine(input.playgroundCommand.trim());
-        log.info(`Using playground command: ${input.playgroundCommand}`);
-        return { cmd: parsed.cmd, args: parsed.args };
-    }
-
-    if (input.mcpConfig?.mcpServers) {
-        // Get the first server from the config
-        const servers = Object.entries(input.mcpConfig.mcpServers);
-        if (servers.length === 0) {
-            throw new Error('No servers found in mcpConfig');
-        }
-
-        const [serverName, config] = servers[0];
-        log.info(`Using MCP config for server: ${serverName}`);
-
-        return {
-            cmd: config.command,
-            args: config.args || [],
-            env: config.env,
-        };
-    }
-
-    throw new Error('Either playgroundCommand or mcpConfig is required');
 }
 
 // Spawn MCP server as subprocess
@@ -326,8 +280,8 @@ app.post('/message', async (req: Request, res: Response) => {
 async function main() {
     const input = await Actor.getInput<ActorInput>();
 
-    if (!input?.playgroundCommand && !input?.mcpConfig) {
-        throw new Error('Either playgroundCommand or mcpConfig is required');
+    if (!input?.mcpConfig) {
+        throw new Error('mcpConfig is required. Paste the JSON config from Smithery.');
     }
 
     // Get command from input
