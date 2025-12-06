@@ -8,32 +8,52 @@
   "usesStandbyMode": true,
   "input": {
     "title": "MCP Bridge Input",
-    "description": "Configure which MCP server to host. Use either 'package' (npm install) or 'command' (custom command like npx).",
+    "description": "Configure which MCP server to host. Easiest: use Smithery Server ID.",
     "type": "object",
     "schemaVersion": 1,
     "properties": {
-      "package": {
-        "title": "NPM Package",
+      "smitheryServer": {
+        "title": "Smithery Server",
         "type": "string",
-        "description": "npm package name to install and run (e.g., @modelcontextprotocol/server-everything). Leave empty if using 'command'.",
+        "description": "Paste the server ID from smithery.ai (e.g., '@VapiAI/vapi-mcp-server')",
+        "editor": "textfield",
+        "prefill": "@anthropics/mcp-server-fetch"
+      },
+      "smitheryApiKey": {
+        "title": "Smithery API Key",
+        "type": "string",
+        "description": "Get your API key from https://smithery.ai/account/api-keys",
+        "editor": "textfield",
+        "isSecret": true
+      },
+      "commandLine": {
+        "title": "Command Line (Alternative)",
+        "type": "string",
+        "description": "Or paste full command (e.g., 'npx @smithery/cli@latest run @VapiAI/vapi-mcp-server')",
+        "editor": "textfield"
+      },
+      "package": {
+        "title": "NPM Package (Alternative)",
+        "type": "string",
+        "description": "Or npm package name to install and run directly.",
         "editor": "textfield"
       },
       "version": {
         "title": "Package Version",
         "type": "string",
-        "description": "Optional: specific version to install (e.g., 1.0.0). Only used with 'package'.",
+        "description": "Optional: specific version (only for NPM Package mode).",
         "editor": "textfield"
       },
       "command": {
-        "title": "Custom Command",
+        "title": "Custom Command (Alternative)",
         "type": "string",
-        "description": "Custom command to run (e.g., 'npx'). Use this instead of 'package' for npx-style commands.",
+        "description": "Or custom command (e.g., 'npx') with args below.",
         "editor": "textfield"
       },
       "args": {
         "title": "CLI Arguments",
         "type": "array",
-        "description": "Arguments to pass to the command (e.g., ['@smithery/cli@latest', 'run', '@executeautomation/playwright-mcp-server'])",
+        "description": "Arguments for Custom Command or NPM Package mode.",
         "editor": "stringList"
       },
       "env": {
