@@ -37,6 +37,7 @@ interface JsonRpcMessage {
 
 // Global state
 let mcpProcess: ChildProcess | null = null;
+let mcpReady = false;
 let requestIdCounter = 1;
 const pendingRequests = new Map<string | number, {
     resolve: (value: JsonRpcMessage) => void;
@@ -192,7 +193,8 @@ app.get('/', (req: Request, res: Response) => {
 // Health check endpoint
 app.get('/health', (_req: Request, res: Response) => {
     res.json({
-        status: mcpProcess ? 'running' : 'stopped',
+        status: mcpReady ? 'ready' : mcpProcess ? 'starting' : 'stopped',
+        mcpReady,
         clients: sseClients.size,
         pendingRequests: pendingRequests.size,
     });
@@ -214,30 +216,26 @@ app.get('/sse', async (req: Request, res: Response) => {
     const webServerUrl = process.env.ACTOR_WEB_SERVER_URL || 'http://localhost:3000';
     res.write(`event: endpoint\ndata: ${webServerUrl}/message\n\n`);
 
-    // Send initial connection message
-    res.write(`data: ${JSON.stringify({ type: 'connected', status: 'ready' })}\n\n`);
+    // Wait for MCP to be ready if it's still starting
+    if (!mcpReady && mcpProcess) {
+        res.write(`data: ${JSON.stringify({ type: 'status', status: 'waiting_for_mcp' })}\n\n`);
 
-    // If MCP server is running, send initialize response
-    if (mcpProcess) {
-        try {
-            const initResponse = await sendToMcp({
-                jsonrpc: '2.0',
-                id: requestIdCounter++,
-                method: 'initialize',
-                params: {
-                    protocolVersion: '2024-11-05',
-                    capabilities: {},
-                    clientInfo: {
-                        name: 'chatgpt-mcp-bridge',
-                        version: '1.0.0',
-                    },
-                },
-            });
-            res.write(`data: ${JSON.stringify(initResponse)}\n\n`);
-        } catch (error) {
-            log.error('Failed to initialize MCP:', { error });
+        // Wait up to 60 seconds for MCP to be ready
+        const waitStart = Date.now();
+        while (!mcpReady && mcpProcess && Date.now() - waitStart < 60000) {
+            await new Promise((resolve) => setTimeout(resolve, 1000));
         }
     }
+
+    if (!mcpReady) {
+        res.write(`data: ${JSON.stringify({ type: 'error', error: 'MCP server not ready' })}\n\n`);
+        res.end();
+        sseClients.delete(res);
+        return;
+    }
+
+    // Send initial connection message
+    res.write(`data: ${JSON.stringify({ type: 'connected', status: 'ready' })}\n\n`);
 
     req.on('close', () => {
         log.info('SSE client disconnected');
@@ -287,24 +285,56 @@ async function main() {
     // Get command from input
     const { cmd, args, env } = getCommandFromInput(input);
 
-    // Spawn MCP server
-    mcpProcess = spawnMcpServer(cmd, args, env);
-
-    // Give the process a moment to start
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-
-    // Start Express server
+    // Start Express server FIRST (for readiness probe)
     const PORT = process.env.ACTOR_WEB_SERVER_PORT
         ? parseInt(process.env.ACTOR_WEB_SERVER_PORT)
         : 3000;
 
-    app.listen(PORT, () => {
+    app.listen(PORT, async () => {
         const webServerUrl = process.env.ACTOR_WEB_SERVER_URL || `http://localhost:${PORT}`;
         log.info(`MCP Bridge listening on port ${PORT}`);
-        log.info('='.repeat(80));
-        log.info('ChatGPT MCP Server URL:');
-        log.info(`${webServerUrl}/sse`);
-        log.info('='.repeat(80));
+
+        // Now spawn MCP server
+        log.info('Starting MCP server...');
+        mcpProcess = spawnMcpServer(cmd, args, env);
+
+        // Wait for MCP server to be ready (retry initialize for up to 120 seconds)
+        const startTime = Date.now();
+        const timeout = 120000;
+
+        while (Date.now() - startTime < timeout) {
+            if (!mcpProcess) {
+                log.error('MCP process died during startup');
+                break;
+            }
+
+            try {
+                await sendToMcp({
+                    jsonrpc: '2.0',
+                    id: requestIdCounter++,
+                    method: 'initialize',
+                    params: {
+                        protocolVersion: '2024-11-05',
+                        capabilities: {},
+                        clientInfo: { name: 'mcp-bridge', version: '1.0.0' },
+                    },
+                });
+                mcpReady = true;
+                log.info('MCP server is ready!');
+                log.info('='.repeat(80));
+                log.info('ChatGPT MCP Server URL:');
+                log.info(`${webServerUrl}/sse`);
+                log.info('='.repeat(80));
+                break;
+            } catch (e) {
+                log.info('Waiting for MCP server to be ready...');
+                await new Promise((resolve) => setTimeout(resolve, 3000));
+            }
+        }
+
+        if (!mcpReady) {
+            log.error('MCP server failed to start within timeout');
+        }
     });
 }
 
