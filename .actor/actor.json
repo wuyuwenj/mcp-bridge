@@ -3,7 +3,7 @@
   "name": "mcp-bridge",
   "title": "MCP Bridge for ChatGPT",
   "description": "Host any npm MCP server as HTTP/SSE endpoint for ChatGPT",
-  "version": "0.0",
+  "version": "0.1",
   "buildTag": "latest",
   "usesStandbyMode": true,
   "input": {
