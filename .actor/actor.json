@@ -8,59 +8,29 @@
   "usesStandbyMode": true,
   "input": {
     "title": "MCP Bridge Input",
-    "description": "Configure which MCP server to host. Easiest: use Smithery Server ID.",
+    "description": "Paste your Smithery command or JSON config to host as a remote server for ChatGPT.",
     "type": "object",
     "schemaVersion": 1,
     "properties": {
-      "smitheryServer": {
-        "title": "Smithery Server",
+      "playgroundCommand": {
+        "title": "Smithery Playground Command",
         "type": "string",
-        "description": "Paste the server ID from smithery.ai (e.g., '@VapiAI/vapi-mcp-server')",
-        "editor": "textfield",
-        "prefill": "@anthropics/mcp-server-fetch"
-      },
-      "smitheryApiKey": {
-        "title": "Smithery API Key",
-        "type": "string",
-        "description": "Get your API key from https://smithery.ai/account/api-keys",
-        "editor": "textfield",
-        "isSecret": true
-      },
-      "commandLine": {
-        "title": "Command Line (Alternative)",
-        "type": "string",
-        "description": "Or paste full command (e.g., 'npx @smithery/cli@latest run @VapiAI/vapi-mcp-server')",
+        "description": "Paste the playground command from Smithery (e.g., 'npx @smithery/cli@latest run @VapiAI/vapi-mcp-server --playground')",
         "editor": "textfield"
       },
-      "package": {
-        "title": "NPM Package (Alternative)",
-        "type": "string",
-        "description": "Or npm package name to install and run directly.",
-        "editor": "textfield"
-      },
-      "version": {
-        "title": "Package Version",
-        "type": "string",
-        "description": "Optional: specific version (only for NPM Package mode).",
-        "editor": "textfield"
-      },
-      "command": {
-        "title": "Custom Command (Alternative)",
-        "type": "string",
-        "description": "Or custom command (e.g., 'npx') with args below.",
-        "editor": "textfield"
-      },
-      "args": {
-        "title": "CLI Arguments",
-        "type": "array",
-        "description": "Arguments for Custom Command or NPM Package mode.",
-        "editor": "stringList"
-      },
-      "env": {
-        "title": "Environment Variables",
+      "mcpConfig": {
+        "title": "MCP JSON Config",
         "type": "object",
-        "description": "Optional: environment variables for the MCP server (e.g., API keys)",
-        "editor": "json"
+        "description": "Or paste the JSON config from Smithery (the mcpServers object)",
+        "editor": "json",
+        "prefill": {
+          "mcpServers": {
+            "server-name": {
+              "command": "npx",
+              "args": ["-y", "@smithery/cli@latest", "run", "@your/server", "--key", "your-key"]
+            }
+          }
+        }
       }
     },
     "required": []
